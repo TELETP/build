@@ -62,17 +62,17 @@ export function Balance({
 
   return (
     <div className={`space-y-2 ${className}`}>
-      {balances.map(({ symbol, amount, usdValue }) => (
+      {balances.map(({ symbol, amount, usdValue, decimals }) => (
         <div 
           key={symbol}
           className="flex justify-between items-center p-2 rounded-lg bg-gray-50"
         >
           <span className="font-medium">{symbol}</span>
           <div className="text-right">
-            <div>{amount.toFixed(symbol === 'SOL' ? 4 : 2)}</div>
+            <div>{balanceService.formatBalance(amount, decimals)}</div>
             {showUsdValue && (
               <div className="text-sm text-gray-500">
-                ${usdValue.toFixed(2)}
+                ${balanceService.formatBalance(usdValue, 2)}
               </div>
             )}
           </div>
