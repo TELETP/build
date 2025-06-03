@@ -1,103 +1,170 @@
 // src/system/services/auth/verification.ts
-import { db } from '@/system/config/firebase';
+import { auth } from '@/system/config/firebase';
 import { 
-  doc, 
-  getDoc, 
-  setDoc, 
-  updateDoc, 
-  serverTimestamp 
-} from 'firebase/firestore';
+  PhoneAuthProvider,
+  signInWithCredential,
+  ApplicationVerifier
+} from 'firebase/auth';
+import { firestoreService } from '../firestore';
 
-interface VerificationStatus {
-  wallet: string;
-  phoneNumber: string;
+export interface VerificationStatus {
   isVerified: boolean;
   lastVerified: Date | null;
-  updatedAt: Date;
-  createdAt: Date;
+  attempts: number;
+  cooldown?: Date;
 }
 
-export class VerificationService {
-  private readonly COLLECTION = 'verifications';
+export class VerificationError extends Error {
+  constructor(
+    message: string,
+    public code: string,
+    public details?: any
+  ) {
+    super(message);
+    this.name = 'VerificationError';
+  }
+}
 
-  async getStatus(wallet: string): Promise<VerificationStatus | null> {
+class VerificationService {
+  // Development test numbers (as configured in Firebase Console)
+  private readonly TEST_NUMBERS = new Set([
+    '+16505550001',
+    '+16505550002',
+    '+16505550003'
+  ]);
+
+  // Development verification code
+  private readonly TEST_CODE = '123456';
+
+  private readonly MAX_ATTEMPTS = 3;
+  private readonly COOLDOWN_MINUTES = 15;
+
+  async sendVerificationCode(
+    phoneNumber: string,
+    recaptchaVerifier: ApplicationVerifier
+  ): Promise<string> {
     try {
-      const docRef = doc(db, this.COLLECTION, wallet);
-      const docSnap = await getDoc(docRef);
-
-      if (!docSnap.exists()) {
-        return null;
+      // In development, simulate SMS send for test numbers
+      if (process.env.NODE_ENV === 'development' && this.TEST_NUMBERS.has(phoneNumber)) {
+        console.log('Development mode: Simulating SMS send');
+        return 'test-verification-id';
       }
 
-      return docSnap.data() as VerificationStatus;
+      const provider = new PhoneAuthProvider(auth);
+      const verificationId = await provider.verifyPhoneNumber(
+        phoneNumber,
+        recaptchaVerifier
+      );
+
+      return verificationId;
     } catch (error) {
-      console.error('Error getting verification status:', error);
-      throw new Error('Failed to get verification status');
+      console.error('Error sending verification code:', error);
+      throw new VerificationError(
+        'Failed to send verification code',
+        'SEND_CODE_ERROR',
+        { phoneNumber }
+      );
     }
   }
 
-  async createVerification(
-    wallet: string, 
-    phoneNumber: string
-  ): Promise<VerificationStatus> {
+  async verifyCode(
+    verificationId: string,
+    code: string,
+    wallet: string
+  ): Promise<boolean> {
     try {
-      const timestamp = new Date();
-      const verificationData: VerificationStatus = {
-        wallet,
-        phoneNumber,
-        isVerified: false,
-        lastVerified: null,
-        updatedAt: timestamp,
-        createdAt: timestamp
-      };
+      // In development, accept test code for test verification ID
+      if (
+        process.env.NODE_ENV === 'development' && 
+        verificationId === 'test-verification-id' &&
+        code === this.TEST_CODE
+      ) {
+        await this.updateVerificationStatus(wallet, true);
+        return true;
+      }
 
-      const docRef = doc(db, this.COLLECTION, wallet);
-      await setDoc(docRef, verificationData);
-
-      return verificationData;
+      const credential = PhoneAuthProvider.credential(verificationId, code);
+      await signInWithCredential(auth, credential);
+      await this.updateVerificationStatus(wallet, true);
+      return true;
     } catch (error) {
-      console.error('Error creating verification:', error);
-      throw new Error('Failed to create verification');
+      console.error('Error verifying code:', error);
+      throw new VerificationError(
+        'Invalid verification code',
+        'INVALID_CODE',
+        { verificationId }
+      );
     }
   }
 
   async updateVerificationStatus(
-    wallet: string, 
+    wallet: string,
     isVerified: boolean
   ): Promise<void> {
     try {
-      const docRef = doc(db, this.COLLECTION, wallet);
-      await updateDoc(docRef, {
+      await firestoreService.updateDoc('verifications', wallet, {
         isVerified,
         lastVerified: isVerified ? new Date() : null,
         updatedAt: new Date()
       });
     } catch (error) {
       console.error('Error updating verification status:', error);
-      throw new Error('Failed to update verification status');
+      throw new VerificationError(
+        'Failed to update verification status',
+        'UPDATE_STATUS_ERROR',
+        { wallet }
+      );
     }
   }
 
-  async isWalletVerified(wallet: string): Promise<boolean> {
+  async getVerificationStatus(wallet: string): Promise<VerificationStatus> {
     try {
-      const status = await this.getStatus(wallet);
-      if (!status) return false;
+      const doc = await firestoreService.getDoc('verifications', wallet);
+      if (!doc) {
+        return {
+          isVerified: false,
+          lastVerified: null,
+          attempts: 0
+        };
+      }
+      return doc as VerificationStatus;
+    } catch (error) {
+      console.error('Error getting verification status:', error);
+      throw new VerificationError(
+        'Failed to get verification status',
+        'GET_STATUS_ERROR',
+        { wallet }
+      );
+    }
+  }
 
-      // Check if verification is expired (90 days)
-      if (status.lastVerified) {
-        const lastVerified = new Date(status.lastVerified);
-        const now = new Date();
-        const daysSinceVerification = 
-          (now.getTime() - lastVerified.getTime()) / (1000 * 60 * 60 * 24);
-        
-        return status.isVerified && daysSinceVerification < 90;
+  async incrementAttempts(wallet: string): Promise<void> {
+    try {
+      const status = await this.getVerificationStatus(wallet);
+      const attempts = (status.attempts || 0) + 1;
+      
+      let update: Partial<VerificationStatus> = { attempts };
+      
+      if (attempts >= this.MAX_ATTEMPTS) {
+        update.cooldown = new Date(
+          Date.now() + this.COOLDOWN_MINUTES * 60 * 1000
+        );
       }
 
-      return false;
+      await firestoreService.updateDoc('verifications', wallet, update);
     } catch (error) {
-      console.error('Error checking wallet verification:', error);
-      throw new Error('Failed to check wallet verification');
+      console.error('Error incrementing attempts:', error);
+      throw new VerificationError(
+        'Failed to update verification attempts',
+        'INCREMENT_ATTEMPTS_ERROR',
+        { wallet }
+      );
     }
+  }
+
+  isTestNumber(phoneNumber: string): boolean {
+    return process.env.NODE_ENV === 'development' && 
+           this.TEST_NUMBERS.has(phoneNumber);
   }
 }
 
