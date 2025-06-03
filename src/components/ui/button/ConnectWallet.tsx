@@ -5,9 +5,13 @@ import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { ConnectWalletProps } from './types';
 import { ErrorMessage } from '../feedback/ErrorMessage';
+import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+import { SOLANA_CONFIG } from '@/system/config/solana';
 
 // Import wallet types
-import '@/system/types/wallets';
+import '@/system/types/wallet';
+
+const WALLET_STORAGE_KEY = 'selectedWallet';
 
 interface DetectedWallet {
   name: string;
@@ -41,13 +45,20 @@ export function ConnectWallet({
       }
 
       setDetectedWallets(wallets);
-      if (wallets.length === 1) {
+
+      const storedWallet = localStorage.getItem(WALLET_STORAGE_KEY);
+      if (storedWallet && wallets.some(w => w.name === storedWallet)) {
+        setSelectedWallet(storedWallet);
+        connectWallet(storedWallet).catch(() => {
+          localStorage.removeItem(WALLET_STORAGE_KEY);
+          setSelectedWallet(null);
+        });
+      } else if (wallets.length === 1) {
         setSelectedWallet(wallets[0].name);
       }
     };
 
     checkWallets();
-    // Add event listener for wallet installations
     window.addEventListener('load', checkWallets);
     return () => window.removeEventListener('load', checkWallets);
   }, []);
@@ -71,13 +82,33 @@ export function ConnectWallet({
         throw new Error('Wallet not found');
       }
 
-      await provider.connect();
+      if (walletName === 'Phantom' && provider.isConnected && provider.publicKey) {
+        const network = SOLANA_CONFIG.NETWORK as WalletAdapterNetwork;
+        if (provider.network !== network) {
+          try {
+            await provider.disconnect();
+            await provider.connect({ onlyIfTrusted: true, network });
+          } catch (networkError) {
+            console.error('Failed to switch networks:', networkError);
+            setError('Failed to switch to correct network. Please connect manually.');
+            return;
+          }
+        }
+      } else {
+        await provider.connect();
+      }
+
+      localStorage.setItem(WALLET_STORAGE_KEY, walletName);
       setIsConnected(true);
       setError(null);
       onConnect?.();
-    } catch (err) {
+    } catch (err: any) {
       console.error('Wallet connection error:', err);
-      setError('Failed to connect wallet. Please try again.');
+      if (err.message === 'User rejected the request.') {
+        setError('Please approve the connection in your wallet.');
+      } else {
+        setError(err.message || 'Failed to connect wallet. Please try again.');
+      }
     }
   };
 
@@ -98,6 +129,7 @@ export function ConnectWallet({
           await provider.disconnect();
         }
 
+        localStorage.removeItem(WALLET_STORAGE_KEY);
         setIsConnected(false);
         setSelectedWallet(null);
         onDisconnect?.();
@@ -107,7 +139,6 @@ export function ConnectWallet({
       setError('Failed to disconnect wallet');
     }
   };
-
 
   const handleClick = () => {
     if (isConnected) {
