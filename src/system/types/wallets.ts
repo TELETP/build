@@ -1,8 +1,9 @@
-import { WalletAdapterNetwork } from '@solana/wallet-adapter-base';
+// src/system/types/wallet.ts
+import { WalletAdapterNetwork, PublicKey } from '@solana/wallet-adapter-base';
 
 interface PhantomWallet {
   isPhantom: boolean;
-  publicKey?: { toBytes(): Uint8Array; toString(): string };
+  publicKey?: PublicKey;
   network?: WalletAdapterNetwork;
   connect(opts?: { onlyIfTrusted: boolean, network?: WalletAdapterNetwork }): Promise<{ publicKey: PublicKey }>;
   disconnect(): Promise<void>;
@@ -11,6 +12,8 @@ interface PhantomWallet {
 
 interface SolflareProvider {
   isSolflare: boolean;
+  publicKey?: PublicKey; // Add publicKey to SolflareProvider
+  network?: WalletAdapterNetwork; // Add network to SolflareProvider
   connect(): Promise<void>;
   disconnect(): Promise<void>;
   isConnected: boolean;
@@ -28,3 +31,4 @@ declare global {
 }
 
 export {};
+
