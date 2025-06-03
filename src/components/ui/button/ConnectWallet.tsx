@@ -31,23 +31,19 @@ export function ConnectWallet({
         await disconnect();
         onDisconnect?.();
       } else {
-        if (!wallet) {
-          setError(
-            'No wallet found. Please install a Solana wallet like Phantom, Solflare, or Backpack.'
-          );
-          return;
-        }
         await connect();
         onConnect?.();
       }
     } catch (error) {
-      if (error instanceof WalletNotConnectedError) {
+      console.error('Wallet connection error:', error);
+      if (!wallet) {
         setError(
           'No wallet found. Please install a Solana wallet like Phantom, Solflare, or Backpack.'
         );
+      } else if (error instanceof WalletNotConnectedError) {
+        setError('Please connect your wallet to continue.');
       } else {
         setError('Failed to connect wallet. Please try again.');
-        console.error('Wallet connection error:', error);
       }
     }
   };
@@ -86,7 +82,7 @@ export function ConnectWallet({
             action={
               !wallet ? {
                 label: 'Get a Wallet',
-                onClick: () => window.open('https://solana.com/ecosystem/wallets', '_blank')
+                onClick: () => window.open('https://solana.com/solana-wallets', '_blank')
               } : undefined
             }
           />
