@@ -1,4 +1,6 @@
 // src/components/ui/feedback/ErrorMessage.tsx
+import { ErrorMessageProps } from './types';
+
 export function ErrorMessage({ 
   message, 
   className = '',

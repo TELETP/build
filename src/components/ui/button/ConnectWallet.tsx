@@ -3,7 +3,7 @@
 
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletNotConnectedError } from '@solana/wallet-adapter-base';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ConnectWalletProps } from './types';
 import { ErrorMessage } from '../feedback/ErrorMessage';
 
@@ -25,10 +25,17 @@ export function ConnectWallet({
     connected,
     connect,
     disconnect,
-    select
+    select,
+    wallets  // Add this to check available wallets
   } = useWallet();
 
   const [error, setError] = useState<string | null>(null);
+  const [hasAvailableWallets, setHasAvailableWallets] = useState<boolean>(false);
+
+  // Check for available wallets
+  useEffect(() => {
+    setHasAvailableWallets(wallets.length > 0);
+  }, [wallets]);
 
   const handleClick = async () => {
     setError(null);
@@ -37,26 +44,40 @@ export function ConnectWallet({
         await disconnect();
         onDisconnect?.();
       } else {
-        // First check if a wallet is selected
-        if (!select || !wallet) {
+        // Only show no wallet error if there are truly no wallets available
+        if (!hasAvailableWallets) {
           setError(
-            'Please install and select a Solana wallet (Phantom, Solflare, or Backpack)'
+            'Please install a Solana wallet (Phantom, Solflare, or Backpack)'
           );
           return;
         }
+        
+        // If wallets are available but none selected, show select message
+        if (!wallet) {
+          setError('Please select a wallet to connect');
+          return;
+        }
+
         await connect();
         onConnect?.();
       }
     } catch (error) {
       console.error('Wallet connection error:', error);
-      // Check for specific error types
       const walletError = error as WalletError;
-      if (walletError?.name === 'WalletNotSelectedError') {
-        setError('Please select a wallet to connect');
-      } else if (error instanceof WalletNotConnectedError) {
-        setError('Wallet not connected. Please try again.');
-      } else {
-        setError(walletError.message || 'Failed to connect wallet. Please try again.');
+      
+      // More specific error handling
+      switch (walletError.name) {
+        case 'WalletNotSelectedError':
+          setError('Please select a wallet to connect');
+          break;
+        case 'WalletNotConnectedError':
+          setError('Wallet not connected. Please try again.');
+          break;
+        case 'WalletConnectionError':
+          setError('Failed to connect to wallet. Please try again.');
+          break;
+        default:
+          setError(walletError.message || 'Failed to connect wallet. Please try again.');
       }
     }
   };
@@ -93,7 +114,7 @@ export function ConnectWallet({
           <ErrorMessage 
             message={error}
             action={
-              !wallet ? {
+              !hasAvailableWallets ? {
                 label: 'Get a Wallet',
                 onClick: () => window.open('https://solana.com/solana-wallets', '_blank')
               } : undefined
