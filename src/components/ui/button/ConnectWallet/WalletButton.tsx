@@ -1,11 +1,12 @@
 // src/components/ui/button/ConnectWallet/WalletButton.tsx
 'use client';
 
+import { MouseEvent } from 'react'; // Import MouseEvent
 import { ConnectWalletProps } from './types';
 
 interface WalletButtonProps extends ConnectWalletProps {
   isConnected: boolean;
-  onClick: () => void;
+  onClick: (event: MouseEvent<HTMLButtonElement>) => void; // Correct onClick type
 }
 
 export default function WalletButton({
@@ -36,3 +37,4 @@ export default function WalletButton({
     </button>
   );
 }
+

@@ -1,7 +1,7 @@
 // src/components/ui/button/ConnectWallet/index.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react'; // Import useEffect
 import { ConnectWalletProps } from './types';
 import { ErrorMessage } from '../../feedback/ErrorMessage';
 import WalletButton from './WalletButton';
