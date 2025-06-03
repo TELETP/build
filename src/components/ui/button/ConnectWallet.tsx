@@ -7,6 +7,11 @@ import { useState } from 'react';
 import { ConnectWalletProps } from './types';
 import { ErrorMessage } from '../feedback/ErrorMessage';
 
+interface WalletError extends Error {
+  name: string;
+  message: string;
+}
+
 export function ConnectWallet({ 
   className = '',
   isLoading,
@@ -19,7 +24,8 @@ export function ConnectWallet({
     connecting,
     connected,
     connect,
-    disconnect 
+    disconnect,
+    select
   } = useWallet();
 
   const [error, setError] = useState<string | null>(null);
@@ -31,19 +37,26 @@ export function ConnectWallet({
         await disconnect();
         onDisconnect?.();
       } else {
+        // First check if a wallet is selected
+        if (!select || !wallet) {
+          setError(
+            'Please install and select a Solana wallet (Phantom, Solflare, or Backpack)'
+          );
+          return;
+        }
         await connect();
         onConnect?.();
       }
     } catch (error) {
       console.error('Wallet connection error:', error);
-      if (!wallet) {
-        setError(
-          'No wallet found. Please install a Solana wallet like Phantom, Solflare, or Backpack.'
-        );
+      // Check for specific error types
+      const walletError = error as WalletError;
+      if (walletError?.name === 'WalletNotSelectedError') {
+        setError('Please select a wallet to connect');
       } else if (error instanceof WalletNotConnectedError) {
-        setError('Please connect your wallet to continue.');
+        setError('Wallet not connected. Please try again.');
       } else {
-        setError('Failed to connect wallet. Please try again.');
+        setError(walletError.message || 'Failed to connect wallet. Please try again.');
       }
     }
   };
