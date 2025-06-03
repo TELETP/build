@@ -9,3 +9,8 @@ export interface ProjectTokenPriceData {
   priceInUSD: number;
   stageName: string;
 }
+
+export interface BalanceProps {
+  className?: string;
+  showUsdValue?: boolean;
+}

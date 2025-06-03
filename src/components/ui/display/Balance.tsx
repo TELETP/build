@@ -9,6 +9,14 @@ import { BalanceProps } from './types';
 import { balanceService } from '@/system/services/balance/service';
 import { TokenBalance, BalanceError } from '@/system/services/balance/types';
 
+// Helper function for formatting balances
+const formatBalance = (balance: number, decimals: number = 4): string => {
+  return balance.toLocaleString(undefined, {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: decimals
+  });
+};
+
 export function Balance({ 
   className = '',
   showUsdValue = true 
@@ -69,10 +77,10 @@ export function Balance({
         >
           <span className="font-medium">{symbol}</span>
           <div className="text-right">
-            <div>{balanceService.formatBalance(amount, decimals)}</div>
+            <div>{formatBalance(amount, decimals)}</div>
             {showUsdValue && (
               <div className="text-sm text-gray-500">
-                ${balanceService.formatBalance(usdValue, 2)}
+                ${formatBalance(usdValue, 2)}
               </div>
             )}
           </div>
