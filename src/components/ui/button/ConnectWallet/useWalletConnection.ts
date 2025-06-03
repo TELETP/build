@@ -11,6 +11,12 @@ interface UseWalletConnectionProps {
   onDisconnect?: () => void;
 }
 
+interface WalletError extends Error {
+  name: string;
+  message: string;
+}
+
+
 const useWalletConnection = ({ onConnect, onDisconnect }: UseWalletConnectionProps) => {
   const [selectedWallet, setSelectedWallet] = useState<string | null>(localStorage.getItem(WALLET_STORAGE_KEY));
   const [isConnected, setIsConnected] = useState(false);
@@ -59,12 +65,16 @@ const useWalletConnection = ({ onConnect, onDisconnect }: UseWalletConnectionPro
       setIsConnecting(false);
       setError(null);
       onConnect?.();
-    } catch (err: any) {
-      console.error('Wallet connection error:', err);
-      if (err.message === 'User rejected the request.') {
-        setError('Please approve the connection in your wallet.');
+    } catch (error: unknown) {
+      console.error('Wallet connection error:', error);
+      if (error instanceof Error) {
+        if (error.message === 'User rejected the request.') {
+          setError('Please approve the connection in your wallet.');
+        } else {
+          setError(error.message || 'Failed to connect wallet. Please try again.');
+        }
       } else {
-        setError(err.message || 'Failed to connect wallet. Please try again.');
+        setError('An unknown error occurred.');
       }
       setIsConnecting(false);
     }
@@ -108,4 +118,4 @@ const useWalletConnection = ({ onConnect, onDisconnect }: UseWalletConnectionPro
   };
 };
 
-export default useWal
+export default useWalletConnection;
