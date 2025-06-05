@@ -17,7 +17,7 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 ```
-The `firebase.ts` file validates that these environment variables are set.
+The `firebase.ts` file validates that these environment variables are set. These environment variables are detailed further in the main [Environment Variables documentation](./environment-variables.md).
 
 ## Service Initialization
 
@@ -84,7 +84,7 @@ Ensure the following Firebase services are enabled and configured in your Fireba
 ### Firestore Rules
 - Implement robust Firestore security rules to control read/write access to your data.
 - Validate data structure and content at the security rule level.
-- It is critical to implement robust Firestore security rules, especially for the `verifications` collection, to ensure users can only access and modify their own data appropriately. (More details on these rules will be in `docs/services/firestore.md`).
+- It is critical to implement robust Firestore security rules, especially for the `verifications` collection, to ensure users can only access and modify their own data appropriately. (More details on these rules will be in `docs/services/firestore.md`). More details on the `verifications` collection can be found in the [Firestore Service documentation](../services/firestore.md).
 
 ## Usage Examples
 

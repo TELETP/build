@@ -53,6 +53,26 @@ Access the development server at `http://localhost:3000`
 2. Select your project
 3. Verify connection to development environment
 
+### 3. Phone Verification in Development
+
+To facilitate easier testing of the phone verification flow without incurring SMS costs or requiring actual phone numbers during development, the system provides the following features when `process.env.NODE_ENV` is set to `'development'`:
+
+*   **Test Phone Numbers:**
+    *   A predefined set of test phone numbers is configured in `src/system/services/auth/verification.ts` (e.g., `+16505550001`, `+16505550002`, `+16505550003`).
+    *   When one of these numbers is used for verification in development mode, the system simulates sending an SMS.
+
+*   **Static Test Verification Code:**
+    *   For the above test phone numbers, a static verification code is used: `123456`.
+    *   Enter this code when prompted for the OTP during the development testing flow.
+
+*   **How to Use:**
+    1.  Ensure your application is running in development mode (`npm run dev`).
+    2.  When testing the phone verification feature, enter one of the recognized test phone numbers.
+    3.  When prompted for the OTP, enter `123456`.
+    4.  The verification flow should proceed as if a real OTP was sent and verified.
+
+This allows developers to thoroughly test all aspects of the wallet connection and phone verification UI and logic without relying on external SMS services. Refer to `docs/services/auth/verification-service.md` for more details on the `VerificationService`.
+
 ## Configuration Verification
 
 ### 1. Verify Solana Connection

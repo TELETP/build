@@ -7,6 +7,8 @@ project-root/
 ├── .vscode/
 ├── docs/
 │   ├── architecture/
+│   │   ├── authentication-flow.md
+│   │   ├── external-api-integrations.md
 │   │   ├── project-structure.md
 │   │   └── state-management.md
 │   ├── configuration/
@@ -14,6 +16,9 @@ project-root/
 │   │   ├── firebase-config.md
 │   │   └── solana-config.md
 │   ├── services/
+│   │   ├── auth/
+│   │   │   ├── storage-service.md
+│   │   │   └── verification-service.md
 │   │   ├── balance.md
 │   │   ├── firestore.md
 │   │   └── price.md

@@ -36,7 +36,7 @@ The `SOLANA_CONFIG` object has the following structure:
         *   **Development Default:** A placeholder address is used if `process.env.NODE_ENV === 'development'` and the environment variable is not set.
 
 ## Environment Variables
-The following environment variables are used by `src/system/config/solana.ts` to configure the `SOLANA_CONFIG` object. Refer to `docs/configuration/environment-variables.md` for a comprehensive list of all project environment variables.
+The following environment variables are used by `src/system/config/solana.ts` to configure the `SOLANA_CONFIG` object. Refer to the main [Environment Variables documentation](./environment-variables.md) for a comprehensive list and details on all project environment variables.
 
 *   `NEXT_PUBLIC_SOLANA_RPC_ENDPOINT`
 *   `NEXT_PUBLIC_PROGRAM_ID`

@@ -20,7 +20,7 @@ Key environment variables:
 *   `NEXT_PUBLIC_COINMARKETCAP_API_KEY`: The API key for accessing CoinMarketCap services.
 *   `NEXT_PUBLIC_CIRCLE_LASTMAN`: The API key for accessing Circle services.
 
-The system includes validation checks (`src/system/config/utils.ts` and `external.ts`) to ensure these keys are present during application startup, using placeholder values for development mode if actual keys are not provided.
+The system includes validation checks (`src/system/config/utils.ts` and `external.ts`) to ensure these keys are present during application startup, using placeholder values for development mode if actual keys are not provided. For a comprehensive list of all project environment variables and their general security considerations, please refer to the [Environment Variables documentation](../configuration/environment-variables.md).
 
 ## API Details
 
@@ -45,7 +45,7 @@ The system includes validation checks (`src/system/config/utils.ts` and `externa
         1.  **Verify Sensitivity:** Determine if the `NEXT_PUBLIC_CIRCLE_LASTMAN` key is a public key (intended for client-side use, rare for Circle) or a secret key.
         2.  **If Secret:**
             *   It should be renamed (e.g., to `CIRCLE_API_KEY` without the `NEXT_PUBLIC_` prefix).
-            *   It must **only** be used server-side. This involves creating a backend proxy (e.g., a Next.js API route) that the client application calls. This backend route would then securely use the API key to interact with Circle.
+            *   It must **only** be used server-side. This involves creating a backend proxy (e.g., a Next.js API route) that the client application calls. This backend route would then securely use the API key to interact with Circle. This approach is also discussed in the [Environment Variables documentation](../configuration/environment-variables.md) under security considerations.
         3.  **If Unused and Potentially Sensitive:** Even if unused, exposing a potentially sensitive key is risky. Consider removing the configuration entirely if there are no immediate plans for its use, or implement it server-side when the feature is developed.
         4.  **If Public and Unused:** While less risky, having unused configurations can lead to confusion. Consider removing it until it's actively needed.
 

@@ -16,10 +16,10 @@ The flow is designed to link a verified phone number to a user's Solana wallet a
 *   **`WalletConnection.tsx` (Component):** Manages the UI for wallet connection and the overall verification steps.
 *   **`useWalletAuth.ts` (Hook):** Encapsulates wallet state logic, connection/disconnection, and initiates verification checks.
 *   **`@solana/wallet-adapter-react` (Library):** Provides the core functionality for connecting to various Solana wallets.
-*   **`VerificationService` (`src/system/services/auth/verification.ts`):** Handles the business logic for phone verification, including interaction with Firebase Auth and Firestore.
-*   **`VerificationStorageService` (`src/system/services/auth/storage.ts`):** Manages caching of verification status in the browser's localStorage.
+*   **[`VerificationService` (`src/system/services/auth/verification.ts`)](../services/auth/verification-service.md):** Handles the business logic for phone verification, including interaction with Firebase Auth and Firestore.
+*   **[`VerificationStorageService` (`src/system/services/auth/storage.ts`)](../services/auth/storage-service.md):** Manages caching of verification status in the browser's localStorage.
 *   **Firebase Auth:** Google's Firebase service used for sending OTPs to phone numbers and verifying them.
-*   **Firestore:** Google's NoSQL database used to store persistent verification status, attempts, and cooldowns.
+*   **[Firestore](../services/firestore.md):** Google's NoSQL database used to store persistent verification status (primarily in the `verifications` collection), attempts, and cooldowns.
 
 ## Detailed Flow
 
@@ -61,7 +61,7 @@ The sequence of operations is as follows:
 
 *   **Test Phone Numbers:** `VerificationService` includes a set of predefined test phone numbers (`+16505550001`, etc.).
 *   **Test Verification Code:** For these test numbers, a static verification code (`123456`) can be used.
-*   **Simulated SMS:** In development, the actual SMS sending is simulated if a test number is used, and `sendVerificationCode` returns a test `verificationId`. `verifyCode` accepts the test code for this ID. This allows developers to test the verification flow without incurring SMS costs or requiring actual phones.
+*   **Simulated SMS:** In development, the actual SMS sending is simulated if a test number is used, and `sendVerificationCode` returns a test `verificationId`. `verifyCode` accepts the test code for this ID. This allows developers to test the verification flow without incurring SMS costs or requiring actual phones. Refer to the [VerificationService documentation](../services/auth/verification-service.md) for more details on its specific development mode behaviors.
 
 ## Sequence Diagram (Conceptual)
 

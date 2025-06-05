@@ -69,6 +69,39 @@ export default function WalletConnection() {
     }
   };
 
+  // Conceptual Improvement for Error Handling:
+  // The PhoneVerification.tsx component (or any component directly using VerificationService)
+  // can catch VerificationError and set more specific error messages based on error.code.
+  // For example, if PhoneVerification.tsx had an onError prop:
+  //
+  // In PhoneVerification.tsx (conceptual):
+  // } catch (err) {
+  //   if (err instanceof VerificationError) {
+  //     switch (err.code) {
+  //       case 'SEND_CODE_ERROR':
+  //         onError("Failed to send the verification code. Please try again.");
+  //         break;
+  //       case 'INVALID_CODE':
+  //         onError("The code you entered is invalid. Please check and try again.");
+  //         break;
+  //       case 'MAX_ATTEMPTS_REACHED': // Assuming VerificationError could have this code
+  //         onError("You've reached the maximum verification attempts. Please try again later.");
+  //         break;
+  //       default:
+  //         onError(err.message || "An unexpected error occurred during verification.");
+  //     }
+  //   } else {
+  //     onError("An unexpected error occurred.");
+  //   }
+  // }
+  //
+  // Then, WalletConnection.tsx could receive this specific message via the onError prop
+  // and display it, instead of the generic messages currently set in handleConnect
+  // or handleVerificationComplete.
+  //
+  // Similarly, if `handleConnection` or `useWalletConnection` were to propagate
+  // `VerificationError` from underlying service calls, this component could implement
+  // a similar switch statement for its `state.error`.
   return (
     <div className="wallet-connection">
       {!isConnected ? (
